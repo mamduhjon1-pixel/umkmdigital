@@ -5289,7 +5289,7 @@ function AdminOrders({ orders, createNotif }) {
   async function rejectCancel(o) {
     if (!confirm("Tolak pengajuan pembatalan ini?")) return;
     const backStatus = o.paymentMethod === "cash" || o.statusPembayaran === "tunai" ? "pesanan_masuk" : (o.statusPembayaran === "sudah_dibayar" ? "pesanan_masuk" : "menunggu_pembayaran");
-    await updateDoc(doc(db, "orders", o.id), { statusPesanan: backStatus, cancelRequest: false, cancelStatus: "rejected", cancelRejectedAt: serverTimestamp(), updatedAt: serverTimestamp(), cancelRejectedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, "orders", o.id), { statusPesanan: backStatus, cancelRequest: false, cancelStatus: "rejected", cancelRejectedAt: serverTimestamp(), updatedAt: serverTimestamp() });
     await createNotif({ role: "buyer", userId: o.buyerId, type: "order_cancel_rejected", title: "Pembatalan Ditolak", message: `Pengajuan pembatalan ${o.productName} ditolak admin. Pesanan dilanjutkan.`, orderId: o.id });
     await createNotif({ role: "seller", userId: o.sellerId, type: "order_cancel_rejected", title: "Pembatalan Ditolak", message: `Pesanan ${o.productName} tetap dilanjutkan.`, orderId: o.id });
     alert("Pengajuan pembatalan ditolak");
