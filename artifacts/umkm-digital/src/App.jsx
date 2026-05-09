@@ -3689,6 +3689,7 @@ function SellerDashboard({ user, profile, products, orders, wallets, commissionB
     { id: "produk", label: "Produk Saya", icon: "📦" },
     { id: "tagihan", label: "Tagihan Komisi", icon: "💸" },
     { id: "order", label: "Pesanan Masuk", icon: "🛒" },
+    { id: "chat", label: "Chat Buyer & Admin", icon: "💬" },
     { id: "withdraw", label: "Penarikan Saldo", icon: "💰" },
     { id: "profil", label: "Profil Toko", icon: "🏪" },
   ];
@@ -6072,10 +6073,20 @@ function ChatCenter({ user, profile, createNotif, mode = "buyer", users = [] }) 
 
   return (
     <div className="page-container chat-page" style={{ maxWidth: 1100 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: isSellerChatMode ? 10 : 16, flexWrap: "wrap" }}>
         <div style={{ fontSize: 22, fontWeight: 800 }}>💬 Live Chat</div>
-        {isSellerChatMode && <button className="btn-primary btn-sm" onClick={startChatWithAdmin} disabled={startingChat}>{startingChat ? "Membuka..." : "Chat Admin"}</button>}
       </div>
+      {isSellerChatMode && (
+        <div className="card" style={{ marginBottom: 14, background: "var(--orange-light)", border: "1.5px solid var(--orange)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "12px 16px" }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "var(--orange)" }}>Butuh bantuan admin?</div>
+            <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 2 }}>Klik tombol di kanan untuk langsung mulai chat dengan admin.</div>
+          </div>
+          <button className="btn-primary" onClick={startChatWithAdmin} disabled={startingChat} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+            {startingChat ? "Membuka..." : "💬 Chat Admin Sekarang"}
+          </button>
+        </div>
+      )}
       {isAdminChatMode && sellers.length > 0 && (
         <div className="card" style={{ marginBottom: 14 }}>
           <div style={{ fontWeight: 800, marginBottom: 10 }}>Mulai chat dengan seller</div>
