@@ -888,8 +888,8 @@ function calculateSameDayShipping(distanceKm) {
 const CATEGORY_GROUPS = {
   "Makanan": ["Makanan Ringan", "Makanan Berat", "Kue Basah", "Kue Kering", "Frozen Food", "Sambal", "Makanan Tradisional", "Makanan Khas Daerah"],
   "Minuman": ["Minuman Dingin", "Minuman Panas", "Kopi", "Teh", "Jus", "Minuman Herbal", "Minuman Kemasan"],
-  "Sayuran": ["Kentang", "Cabai", "Tomat", "Bawang", "Wortel", "Kubis", "Terong", "Timun", "Sayur Hijau", "Jagung", "Kacang", "Sayuran Lainnya"],
-  "Buah-Buahan": ["Pisang", "Mangga", "Jeruk", "Apel", "Rambutan", "Durian", "Semangka", "Melon", "Pepaya", "Nanas", "Alpukat", "Anggur", "Salak", "Buah Lainnya"],
+  "Sayuran": ["🥔 Kentang", "🌶️ Cabai", "🍅 Tomat", "🧅 Bawang", "🥕 Wortel", "🥦 Kubis", "🍆 Terong", "🥒 Timun", "🥬 Sayur Hijau", "🌽 Jagung", "🥜 Kacang", "🌿 Sayuran Lainnya"],
+  "Buah-Buahan": ["🍌 Pisang", "🥭 Mangga", "🍊 Jeruk", "🍎 Apel", "🫐 Rambutan", "🌰 Durian", "🍉 Semangka", "🍈 Melon", "🍑 Pepaya", "🍍 Nanas", "🥑 Alpukat", "🍇 Anggur", "🍂 Salak", "🍓 Buah Lainnya"],
   "Fashion": ["Baju Pria", "Baju Wanita", "Baju Anak", "Daster", "Kaos", "Celana", "Jaket", "Hijab", "Sandal", "Sepatu", "Tas", "Aksesoris"],
   "Kecantikan & Perawatan": ["Skincare", "Makeup", "Body Care", "Hair Care", "Parfum", "Alat Kecantikan"],
   "Kesehatan": ["Vitamin", "Obat Herbal", "Alat Kesehatan", "Suplemen"],
