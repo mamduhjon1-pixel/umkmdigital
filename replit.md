@@ -1,45 +1,45 @@
-# [Project name]
+# UMKM Digital
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An Indonesian e-commerce marketplace platform for local SMBs (Usaha Mikro Kecil Menengah) — buyers can browse and purchase products, sellers manage their stores, and admins oversee the whole platform.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Frontend: `pnpm --filter @workspace/umkm-digital run dev` (served at `/`)
+- API server: `pnpm --filter @workspace/api-server run dev`
+- Required secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React + Vite (artifact: `artifacts/umkm-digital/`)
+- Backend: Supabase (auth + realtime database via Supabase JS client)
+- Image uploads: Cloudinary
+- CSS: Custom CSS variables (no Tailwind in the main app)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/umkm-digital/src/App.jsx` — entire frontend app (single large file, ~6400 lines)
+- `artifacts/umkm-digital/src/services/supabaseData.js` — Supabase client + Firestore-compatible API shim
+- `artifacts/umkm-digital/src/services/cloudinary.js` — image upload helper
+- `artifacts/umkm-digital/src/app.css` — all custom CSS styles
+- `artifacts/umkm-digital/public/service-worker.js` — PWA service worker
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- App.jsx is a monolithic single-file React component (~6400 lines) — this was how it was built originally; all UI, state, and business logic lives here.
+- Supabase is used for auth, database, and realtime — the `supabaseData.js` shim provides a Firestore-compatible API surface so legacy Firebase-style calls work against Supabase tables.
+- No Replit PostgreSQL — the app uses Supabase as its database; the shared `lib/db` package is unused by this app.
+- CSS is plain custom properties (no Tailwind) — the app has its own design system with `--orange`, `--bg`, etc.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+Three user roles:
+- **Buyer**: Browse products by category/location, add to cart, checkout, track orders, chat with sellers
+- **Seller**: Manage product listings, process orders, view wallet/earnings, withdraw funds
+- **Admin**: Oversee all users/orders, manage commission settings, approve seller withdrawals, view analytics
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- `VITE_*` env vars must be set as Replit Secrets (not `.env` file) to be picked up by Vite
+- The Supabase shim in `supabaseData.js` polyfills Firestore-style calls (`collection`, `doc`, `onSnapshot`, etc.) on top of Supabase — don't replace with direct Supabase calls without updating all call sites in App.jsx
+- `App.jsx` uses `.jsx` extension, not `.tsx` — TypeScript checking is skipped for it intentionally
