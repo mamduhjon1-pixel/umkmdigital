@@ -2340,18 +2340,18 @@ export default function App() {
             <span>Daftar</span>
           </button>
         )}
-        {user ? (
+        {user && profile?.role === "buyer" ? (
           <button className={`bottom-nav-item ${page === "chat" ? "active" : ""}`} onClick={() => navGoTo("chat")} style={{ position: "relative" }}>
             <span className="nav-icon">💬</span>
             {unreadChat > 0 && <span className="nav-badge">{unreadChat}</span>}
             <span>Chat</span>
           </button>
-        ) : (
+        ) : !user ? (
           <button className={`bottom-nav-item ${page === "login" ? "active" : ""}`} onClick={() => navGoTo("login")}>
             <span className="nav-icon">🔔</span>
             <span>Notifikasi</span>
           </button>
-        )}
+        ) : null}
         <button className={`bottom-nav-item ${["buyer","seller","admin","login"].includes(page) ? "active" : ""}`}
           onClick={() => {
             if (!user) navGoTo("login");
