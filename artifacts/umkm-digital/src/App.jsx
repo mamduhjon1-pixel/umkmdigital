@@ -30,7 +30,6 @@ import {
 } from "./services/supabaseData";
 import { auth, db, supabase } from "./services/supabaseData";
 import { uploadImageToCloudinary } from "./services/cloudinary";
-import "./index.css";
 
 const complaintEmail = "umkmdigitalecommerce@gmail.com";
 const rupiah = (n) => `Rp${Number(n || 0).toLocaleString("id-ID")}`;
@@ -3858,20 +3857,27 @@ function AddProduct({ user, profile, products, hasCommissionDebt = false, commis
     if (hasCommissionDebt) { alert(`Akun seller sedang diblokir manual oleh admin/sub admin. Upload produk belum bisa dilakukan.${commissionDebt > 0 ? ` Tagihan komisi: ${rupiah(commissionDebt)}.` : ""}`); return; }
     if (!file) { alert("Pilih gambar dulu"); return; }
     setLoading(true);
-    const imageUrl = await uploadImageToCloudinary(file);
-    const needsAdminApproval = form.category === "Jasa Lokal" && form.subCategory === "Jasa Pijat";
-    const ref = await addDoc(collection(db, "products"), {
-      sellerId: user.uid, sellerName: profile.name, productName: form.productName, category: form.category, subCategory: form.subCategory,
-      price: parseNumberInput(form.price), stock: Number(form.stock), description: form.description,
-      weightGram: Number(form.weightGram || 1000), sellerAddress: form.sellerAddress,
-      sellerMapLink: form.sellerMapLink,
-      kabupaten: normalizeLocationText(form.kabupaten), kecamatan: normalizeLocationText(form.kecamatan), desa: normalizeLocationText(form.desa),
-      imageUrl, status: needsAdminApproval ? "pending" : "active", isDeleted: false, commissionType: "percent", commissionValue: Number(commissionSetting?.globalCommissionPercent || 10),
-      averageRating: 0, ratingCount: 0, totalReviews: 0, soldCount: 0, totalSold: 0, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-    });
-    await createNotif({ role: "admin", type: "product_new", title: "Produk Baru", message: `${profile.name} upload produk ${form.productName}`, productId: ref.id });
-    setLoading(false); setShowForm(false); setFile(null); setPreview("");
-    alert(needsAdminApproval ? "Jasa Pijat berhasil diupload dan menunggu approval admin." : "Produk berhasil diupload dan langsung aktif.");
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      const needsAdminApproval = form.category === "Jasa Lokal" && form.subCategory === "Jasa Pijat";
+      const ref = await addDoc(collection(db, "products"), {
+        sellerId: user.uid, sellerName: profile.name, productName: form.productName, category: form.category, subCategory: form.subCategory,
+        price: parseNumberInput(form.price), stock: Number(form.stock), description: form.description,
+        weightGram: Number(form.weightGram || 1000), sellerAddress: form.sellerAddress,
+        sellerMapLink: form.sellerMapLink,
+        kabupaten: normalizeLocationText(form.kabupaten), kecamatan: normalizeLocationText(form.kecamatan), desa: normalizeLocationText(form.desa),
+        imageUrl, status: needsAdminApproval ? "pending" : "active", isDeleted: false, commissionType: "percent", commissionValue: Number(commissionSetting?.globalCommissionPercent || 10),
+        averageRating: 0, ratingCount: 0, totalReviews: 0, soldCount: 0, totalSold: 0, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+      });
+      await createNotif({ role: "admin", type: "product_new", title: "Produk Baru", message: `${profile.name} upload produk ${form.productName}`, productId: ref.id });
+      setShowForm(false); setFile(null); setPreview("");
+      alert(needsAdminApproval ? "Jasa Pijat berhasil diupload dan menunggu approval admin." : "Produk berhasil diupload dan langsung aktif.");
+    } catch (err) {
+      console.error("Gagal upload produk:", err);
+      alert("Gagal upload produk. Coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function quickEditProduct(p) {
@@ -4069,23 +4075,28 @@ function SellerOrders({ orders, createNotif, hasCommissionDebt = false, commissi
     const adminFee = getProductCommissionTotal(o);
     const sellerAmount = Math.max(0, productTotal - adminFee + cost);
     const totalAmount = productTotal + cost;
-    await updateDoc(doc(db, "orders", o.id), {
-      shippingCost: cost,
-      totalAmount,
-      sellerAmount,
-      sellerReceivableAmount: isTransferPayment(o) ? sellerAmount : 0,
-      sellerProductAmount: Math.max(0, productTotal - adminFee),
-      sellerShippingAmount: cost,
-      cashReceivedBySeller: isCashPayment(o) ? totalAmount : 0,
-      pendingShippingQuote: false,
-      statusPembayaran: o.paymentMethod === "cash" ? "tunai" : "menunggu_pembayaran",
-      statusPesanan: o.paymentMethod === "cash" ? "pesanan_masuk" : "menunggu_pembayaran",
-      courierService: `Ongkir: ${rupiah(cost)}`,
-      updatedAt: serverTimestamp()
-    });
-    // Komisi tunai diproses saat order selesai, bukan saat ongkir dikirim.
-    await createNotif({ role: "buyer", userId: o.buyerId, type: "shipping_quote_ready", title: "Ongkir Sudah Dihitung", message: `Ongkir ${o.productName} adalah ${rupiah(cost)}. Silakan lanjutkan pembayaran.`, orderId: o.id });
-    alert("Ongkir dikirim ke buyer");
+    try {
+      await updateDoc(doc(db, "orders", o.id), {
+        shippingCost: cost,
+        totalAmount,
+        sellerAmount,
+        sellerReceivableAmount: isTransferPayment(o) ? sellerAmount : 0,
+        sellerProductAmount: Math.max(0, productTotal - adminFee),
+        sellerShippingAmount: cost,
+        cashReceivedBySeller: isCashPayment(o) ? totalAmount : 0,
+        pendingShippingQuote: false,
+        statusPembayaran: o.paymentMethod === "cash" ? "tunai" : "menunggu_pembayaran",
+        statusPesanan: o.paymentMethod === "cash" ? "pesanan_masuk" : "menunggu_pembayaran",
+        courierService: `Ongkir: ${rupiah(cost)}`,
+        updatedAt: serverTimestamp()
+      });
+      // Komisi tunai diproses saat order selesai, bukan saat ongkir dikirim.
+      await createNotif({ role: "buyer", userId: o.buyerId, type: "shipping_quote_ready", title: "Ongkir Sudah Dihitung", message: `Ongkir ${o.productName} adalah ${rupiah(cost)}. Silakan lanjutkan pembayaran.`, orderId: o.id });
+      alert("Ongkir dikirim ke buyer");
+    } catch (err) {
+      console.error("Gagal mengirim ongkir:", err);
+      alert("Gagal mengirim ongkir. Coba lagi.");
+    }
   }
 
   async function processOrder(o) {
@@ -4828,34 +4839,6 @@ function AdminDashboard({ user, profile, products, orders, withdrawals, paymentS
 
 
 function AdminSellerBlocks({ users = [], commissionBills = [], createNotif }) {
-
-  async function deleteMessage(message) {
-    if (!activeChat?.id || !message?.id) return;
-    if (!confirm("Hapus pesan ini?")) return;
-    try {
-      await deleteDoc(doc(db, "chats", activeChat.id, "messages", message.id));
-    } catch (error) {
-      console.error("Gagal hapus pesan:", error);
-      alert("Gagal menghapus pesan. Coba lagi.");
-    }
-  }
-
-  async function deleteActiveChat() {
-    if (!activeChat?.id) return;
-    if (!confirm("Hapus seluruh percakapan ini? Semua pesan di chat ini akan dihapus.")) return;
-    try {
-      const msgSnap = await getDocs(collection(db, "chats", activeChat.id, "messages"));
-      const batch = writeBatch(db);
-      msgSnap.docs.forEach((d) => batch.delete(doc(db, "chats", activeChat.id, "messages", d.id)));
-      batch.delete(doc(db, "chats", activeChat.id));
-      await batch.commit();
-      setActiveChat(null);
-      setMessages([]);
-    } catch (error) {
-      console.error("Gagal hapus percakapan:", error);
-      alert("Gagal menghapus percakapan. Coba lagi.");
-    }
-  }
 
   const sellers = users
     .filter((u) => u.role === "seller" && !u.isDeleted && u.status !== "deleted")
