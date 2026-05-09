@@ -337,6 +337,27 @@ textarea.form-input { resize: vertical; min-height: 90px; }
 .chat-page { width: 100%; }
 .chat-layout-wrap { align-items: stretch; }
 .chat-list-card, .chat-room-card { min-width: 0; }
+.location-reset-btn {
+  background: transparent;
+  color: var(--orange);
+  border: 1.5px solid var(--orange);
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.15s;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+.location-reset-btn:hover { background: var(--orange-light); }
+.location-reset-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--border);
+  color: var(--text3);
+}
+
 .chat-message-area { min-height: 0; }
 .chat-input-row { background: #fff; flex-shrink: 0; }
 .chat-input-row .form-input { min-width: 0; }

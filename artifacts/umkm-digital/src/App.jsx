@@ -1363,6 +1363,7 @@ export default function App() {
   const presenceHeartbeatRef = useRef(null);
   const cartRealtimeReadyRef = useRef(false);
   const lastSavedCartJsonRef = useRef("");
+  const [dashboardKey, setDashboardKey] = useState(0);
 
   useEffect(() => {
     try {
@@ -1973,7 +1974,7 @@ export default function App() {
   const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   const selectedCartTotal = selectedCartItems.reduce((s, i) => s + Number(i.price || 0) * Number(i.quantity || 1), 0);
   const isAllCartSelected = cart.length > 0 && selectedCartIds.length === cart.length;
-  const unreadNotif = notifications.filter((n) => !n.isRead).length;
+  const unreadNotif = notifications.filter((n) => !n.isRead && n.type !== "chat_message").length;
   const unreadChat = notifications.filter(n => !n.isRead && n.type === "chat_message").length;
   const activeProducts = products.filter((p) => p.status === "active" && !p.isDeleted);
 
@@ -2000,6 +2001,8 @@ export default function App() {
   }
 
   function navGoTo(p) {
+    const refreshPages = new Set(["home", "buyer", "seller", "admin"]);
+    if (refreshPages.has(p)) setDashboardKey((k) => k + 1);
     setPage(p);
     setShowCart(false);
     setSelectedProduct(null);
@@ -2260,13 +2263,13 @@ export default function App() {
       {page === "update-password" && <UpdatePasswordPage setPage={navGoTo} />}
       {page === "register" && <RegisterPage setPage={navGoTo} createNotif={createNotif} />}
       {page === "buyer" && profile?.role === "buyer" && (
-        <BuyerDashboard user={user} profile={profile} orders={sortOrdersByStage(orders.filter((o) => o.buyerId === user.uid))}
+        <BuyerDashboard key={dashboardKey} user={user} profile={profile} orders={sortOrdersByStage(orders.filter((o) => o.buyerId === user.uid))}
           products={activeProducts} paymentSetting={paymentSetting} createNotif={createNotif}
           onAddToCart={addToCart} onProductClick={setSelectedProduct} setPage={navGoTo}
           onLogout={logoutAndClearSession} />
       )}
       {page === "seller" && profile?.role === "seller" && (
-        <SellerDashboard user={user} profile={profile}
+        <SellerDashboard key={dashboardKey} user={user} profile={profile}
           products={products.filter((p) => p.sellerId === user.uid)}
           orders={sortOrdersByStage(orders.filter((o) => {
             const sellerProductIds = new Set(products.filter((p) => p.sellerId === user.uid).map((p) => p.id));
@@ -2276,10 +2279,10 @@ export default function App() {
           onLogout={logoutAndClearSession} />
       )}
       {page === "admin" && (profile?.role === "admin" || profile?.role === "sub_admin") && (
-        <AdminDashboard user={user} profile={profile} products={products} orders={sortOrdersByStage(orders)} withdrawals={withdrawals}
+        <AdminDashboard key={dashboardKey} user={user} profile={profile} products={products} orders={sortOrdersByStage(orders)} withdrawals={withdrawals}
           paymentSetting={paymentSetting} manualBalance={manualBalance} commissionSetting={commissionSetting} wallets={wallets} commissionBills={commissionBills}
           adminCommissionWallet={adminCommissionWallet} adminCommissionTransactions={adminCommissionTransactions}
-          users={allUsers} userPresence={userPresence} createNotif={createNotif} onLogout={logoutAndClearSession} />
+          users={allUsers} userPresence={userPresence} chatUnread={unreadChat} createNotif={createNotif} onLogout={logoutAndClearSession} />
       )}
       {page === "notif" && user && (
         <NotificationPage notifications={notifications} />
@@ -3686,7 +3689,6 @@ function SellerDashboard({ user, profile, products, orders, wallets, commissionB
     { id: "produk", label: "Produk Saya", icon: "📦" },
     { id: "tagihan", label: "Tagihan Komisi", icon: "💸" },
     { id: "order", label: "Pesanan Masuk", icon: "🛒" },
-    { id: "chat", label: "Chat Buyer & Admin", icon: "💬" },
     { id: "withdraw", label: "Penarikan Saldo", icon: "💰" },
     { id: "profil", label: "Profil Toko", icon: "🏪" },
   ];
@@ -4645,7 +4647,7 @@ function AdminCommissionBills({ bills = [], createNotif }) {
   );
 }
 
-function AdminDashboard({ user, profile, products, orders, withdrawals, paymentSetting, manualBalance, commissionSetting, wallets, commissionBills = [], adminCommissionWallet, adminCommissionTransactions = [], users, userPresence = [], createNotif, onLogout }) {
+function AdminDashboard({ user, profile, products, orders, withdrawals, paymentSetting, manualBalance, commissionSetting, wallets, commissionBills = [], adminCommissionWallet, adminCommissionTransactions = [], users, userPresence = [], chatUnread = 0, createNotif, onLogout }) {
   const [tab, setTab] = useState("order");
   const remindedAdminApprovalBillsRef = useRef(new Set());
   const syncedAdminCommissionRef = useRef(new Set());
@@ -4789,7 +4791,7 @@ function AdminDashboard({ user, profile, products, orders, withdrawals, paymentS
         </div>
         {tabs.map((t) => (
           <div key={t.id} className={`dash-sidebar-item ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
-            <span>{t.icon}</span> {t.label}{t.id === "order" && <DashboardBadge value={orders.length} />}{t.id === "sellerApproval" && <DashboardBadge value={users.filter((u) => u.role === "seller" && (u.status === "pending" || u.status === "review")).length} />}{t.id === "chat" && <DashboardBadge value={0} />}{t.id === "commission" && <DashboardBadge value={commissionBills.length} />}{t.id === "produk" && <DashboardBadge value={products.length} />}{t.id === "users" && <DashboardBadge value={users.length} />}{t.id === "withdraw" && <DashboardBadge value={withdrawals.length} />}
+            <span>{t.icon}</span> {t.label}{t.id === "order" && <DashboardBadge value={orders.length} />}{t.id === "sellerApproval" && <DashboardBadge value={users.filter((u) => u.role === "seller" && (u.status === "pending" || u.status === "review")).length} />}{t.id === "chat" && <DashboardBadge value={chatUnread} />}{t.id === "commission" && <DashboardBadge value={commissionBills.length} />}{t.id === "produk" && <DashboardBadge value={products.length} />}{t.id === "users" && <DashboardBadge value={users.length} />}{t.id === "withdraw" && <DashboardBadge value={withdrawals.length} />}
           </div>
         ))}
         <div className="dash-logout-btn-wrap" style={{ padding: "8px 12px", marginTop: "auto" }}>
@@ -6222,8 +6224,9 @@ function NotificationPage({ notifications }) {
     }
   }
 
-  const unread = notifications.filter((n) => !n.isRead);
-  const sorted = [...notifications].sort((a, b) => {
+  const visibleNotifications = notifications.filter((n) => n.type !== "chat_message");
+  const unread = visibleNotifications.filter((n) => !n.isRead);
+  const sorted = [...visibleNotifications].sort((a, b) => {
     const ta = a.createdAt?.seconds || 0;
     const tb = b.createdAt?.seconds || 0;
     return tb - ta;
