@@ -1,0 +1,96 @@
+Please add a new main category called “Sayuran” with expandable subcategories, following the SAME UI and category flow already used in the current website.
+
+Requirements:
+
+1. Add a new MAIN category:
+
+* Sayuran
+
+2. When users click “Sayuran”, it should expand/open and show subcategories such as:
+
+* Kentang
+* Cabai
+* Tomat
+* Bawang
+* Wortel
+* Kubis
+* Terong
+* Timun
+* Sayur Hijau
+* Jagung
+* Kacang
+* Other vegetables if needed
+
+3. IMPORTANT:
+   The UI/UX must follow the EXACT SAME category interaction pattern already used in the current website.
+   Do NOT redesign the category section.
+   Do NOT change the existing layout.
+   Use the same:
+
+* animation
+* spacing
+* card style
+* colors
+* active state
+* mobile responsiveness
+* dropdown/expand behavior
+* hover/click behavior
+
+4. The category system should support:
+
+* main category
+* subcategory
+
+5. Product upload/edit form:
+   Seller must be able to choose:
+
+* Main category = Sayuran
+* Subcategory = Kentang/Cabai/Tomat/etc
+
+6. Product filtering:
+   Buyer must be able to:
+
+* click Sayuran
+* then filter by subcategory
+* see only products from selected subcategory
+
+7. Product data structure:
+   Do NOT break old products.
+   Add support for:
+
+* category
+* subcategory
+
+8. Admin dashboard:
+   If category filters exist, support:
+
+* Sayuran
+* vegetable subcategories
+
+9. Homepage:
+   When clicking Sayuran:
+
+* open subcategory list
+* do not navigate to broken page
+* preserve current UI flow
+
+10. Database:
+    If categories are stored in Supabase:
+
+* add support for subcategory fields
+  If categories are stored in frontend constants:
+* update category structure carefully
+
+11. Backward compatibility:
+    Old products without subcategory must still work.
+
+12. Final test:
+
+* seller upload vegetable product
+* buyer filter vegetable products
+* subcategory filter works
+* admin sees correct categories
+* mobile UI works
+* build production passes
+* no UI breaking
+* no existing category broken
