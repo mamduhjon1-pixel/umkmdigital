@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // RULES TESTING UMKM DIGITAL
+    // Semua user yang sudah login boleh baca/tulis data aplikasi.
+    // Dipakai sementara agar checkout, order, notifikasi, chat, wallet,
+    // produk, dan dashboard tidak error Missing or insufficient permissions saat testing.
+    // Setelah semua fitur stabil, rules ini harus diperketat per role: admin, seller, buyer.
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}
