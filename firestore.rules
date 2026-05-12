@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function userDoc() { return get(/databases/$(database)/documents/users/$(uid())).data; }
+    function role() { return signedIn() ? userDoc().role : null; }
+    function isAdmin() { return signedIn() && (role() == 'admin' || role() == 'sub_admin'); }
+    function isOwner(userId) { return signedIn() && uid() == userId; }
+    function isParticipant() { return signedIn() && uid() in resource.data.participants; }
+    function isNewParticipant() { return signedIn() && uid() in request.resource.data.participants; }
+
+    // Profil akun: user bisa baca profil seller/buyer seperlunya, user edit akun sendiri, admin bisa kelola.
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if signedIn() && (uid() == userId || isAdmin());
+      allow update: if signedIn() && (uid() == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Produk: publik bisa baca produk, seller kelola produk sendiri, admin bisa moderasi.
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if signedIn() && (request.resource.data.sellerId == uid() || isAdmin());
+      allow update: if signedIn() && (resource.data.sellerId == uid() || request.resource.data.sellerId == uid() || isAdmin());
+      allow delete: if signedIn() && (resource.data.sellerId == uid() || isAdmin());
+    }
+
+    // Checkout/order/payment: buyer membuat order, buyer/seller terkait dan admin bisa update prosesnya.
+    match /orders/{orderId} {
+      allow read: if signedIn() && (isAdmin() || resource.data.buyerId == uid() || resource.data.sellerId == uid());
+      allow create: if signedIn() && request.resource.data.buyerId == uid();
+      allow update: if signedIn() && (isAdmin() || resource.data.buyerId == uid() || resource.data.sellerId == uid() || request.resource.data.buyerId == uid() || request.resource.data.sellerId == uid());
+      allow delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read, create, update: if signedIn();
+      allow delete: if isAdmin();
+    }
+
+    match /transactions/{transactionId} {
+      allow read, create, update: if signedIn();
+      allow delete: if isAdmin();
+    }
+
+    match /wallet_transactions/{txId} {
+      allow read, create, update: if signedIn();
+      allow delete: if isAdmin();
+    }
+
+    // Chat dipisah dari notifikasi. Hanya peserta chat/admin yang boleh akses chat.
+    match /chats/{chatId} {
+      allow read: if signedIn() && (isAdmin() || uid() in resource.data.participants || resource.data.sellerId == uid() || resource.data.buyerId == uid() || resource.data.adminId == uid());
+      allow create: if signedIn() && (isAdmin() || uid() in request.resource.data.participants || request.resource.data.sellerId == uid() || request.resource.data.buyerId == uid() || request.resource.data.adminId == uid());
+      allow update: if signedIn() && (isAdmin() || uid() in resource.data.participants || uid() in request.resource.data.participants || resource.data.sellerId == uid() || resource.data.buyerId == uid() || resource.data.adminId == uid());
+      allow delete: if signedIn() && (isAdmin() || uid() in resource.data.participants || resource.data.sellerId == uid() || resource.data.buyerId == uid() || resource.data.adminId == uid());
+
+      match /messages/{messageId} {
+        allow read: if signedIn() && (isAdmin() || uid() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+        allow create: if signedIn() && (isAdmin() || uid() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants) && request.resource.data.senderId == uid();
+        allow update: if signedIn() && (isAdmin() || uid() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+        allow delete: if signedIn() && (isAdmin() || resource.data.senderId == uid());
+      }
+    }
+
+    // Notifikasi bukan chat. User bisa baca/update notifikasi sendiri, admin bisa baca semua.
+    match /notifications/{notifId} {
+      allow read: if signedIn() && (isAdmin() || resource.data.userId == uid() || resource.data.role == role());
+      allow create: if signedIn();
+      allow update: if signedIn() && (isAdmin() || resource.data.userId == uid() || resource.data.role == role());
+      allow delete: if signedIn() && (isAdmin() || resource.data.userId == uid() || resource.data.role == role());
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if signedIn() && (isAdmin() || resource.data.buyerId == uid() || resource.data.userId == uid());
+    }
+
+    match /seller_wallets/{sellerId} {
+      allow read, write: if signedIn() && (isAdmin() || uid() == sellerId);
+    }
+
+    match /withdrawals/{withdrawalId} {
+      allow read: if signedIn() && (isAdmin() || resource.data.sellerId == uid());
+      allow create: if signedIn() && (request.resource.data.sellerId == uid() || isAdmin());
+      allow update: if signedIn() && (isAdmin() || resource.data.sellerId == uid());
+      allow delete: if isAdmin();
+    }
+
+    match /komisi_tagihan/{billId} {
+      allow read: if signedIn() && (isAdmin() || resource.data.sellerId == uid());
+      allow create, update: if signedIn() && (isAdmin() || request.resource.data.sellerId == uid() || resource.data.sellerId == uid());
+      allow delete: if isAdmin();
+    }
+
+    match /admin_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /admin_wallets/{walletId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /admin_commission_transactions/{txId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Fallback operasional: jangan terlalu ketat dulu agar fitur existing tidak putus.
+    match /{document=**} {
+      allow read, create, update: if signedIn();
+      allow delete: if isAdmin();
+    }
+  }
+}
